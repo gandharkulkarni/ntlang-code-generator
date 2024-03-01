@@ -25,13 +25,11 @@ rstr_s:
     sd ra, (sp)
 
     sd a0, 8(sp)
-    # sd a1, 16(sp)
     
     call strlen_s
     mv t0, a0       # t0 = strlen(a1)
 
     ld a0, 8(sp)
-    # ld a1, 16(sp)
 
     addi a1, a1, -1 # a1 is at \0, move previous character and iterate
     
