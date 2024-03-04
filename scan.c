@@ -43,6 +43,10 @@ char *scan_whitespace(char *p, char *end) {
     return p;
 }
 
+bool scan_is_hexdigit(char ch) {
+    return (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F');
+}
+
 bool scan_is_digit(char ch) {
     return (ch >= '0' && ch <= '9');
 }
@@ -57,6 +61,55 @@ char * scan_intlit(char *p, char *end, struct scan_token_st *tp) {
     }
     tp->value[i] = '\0';
     tp->id = TK_INTLIT;
+
+    return p;
+}
+
+char* scan_binlit(char *p, char *end, struct scan_token_st *tp) {
+    int i = 0;
+    p += 2;
+    while ((*p=='0' || *p=='1') && (p<end)) {
+        tp->value[i] = *p;
+        p += 1;
+        i += 1;
+    }
+    if (i == 0) { 
+    	 /* No binary digits were read */
+	 	printf("scan error: Expecting at least one binary digit after '0b' ");
+        exit(-1);
+    }
+    tp->value[i] = '\0';
+    tp->id = TK_BINLIT;
+
+    return p;
+}
+
+char* scan_hexlit(char *p, char *end, struct scan_token_st *tp) {
+    int i = 0;
+    p += 2;
+    while ((scan_is_digit(*p) || scan_is_hexdigit(*p)) && (p<end)) {
+        tp->value[i] = *p;
+	    p += 1;
+	    i += 1;
+    }
+    if (i == 0) {
+        /* No hex digits were read */
+        printf("scan error: Expecting at least one hex digit after '0x' ");
+        exit(-1);
+    }
+    tp->value[i] = '\0';
+    tp->id = TK_HEXLIT;
+    return p;
+}
+char* scan_regname(char *p, char *end, struct scan_token_st *tp) {
+    int i = 0;
+    while((*p=='a' || scan_is_digit(*p)) && (p<end)){
+        tp->value[i] = *p;
+        p += 1;
+        i += 1;
+    }
+    tp->value[i] = '\0';
+    tp->id = TK_REGNAME;
 
     return p;
 }
@@ -91,12 +144,40 @@ char * scan_token(char *p, char *end, struct scan_token_st *tp) {
         /* Ingore whitespace. Notice the recursive call. */
         p = scan_whitespace(p, end);
         p = scan_token(p, end, tp);
+    } else if ((*p=='a')){
+        p = scan_regname(p, end, tp);
+    } else if ((*p=='0' && *(p+1)=='b')) {
+        p = scan_binlit(p, end, tp);
+    } else if ((*p=='0' && *(p+1)=='x')) {
+        p = scan_hexlit(p, end, tp);
     } else if (scan_is_digit(*p)) {
         p = scan_intlit(p, end, tp);        
     } else if (*p == '+') {
         p = scan_token_helper(tp, p, 1, TK_PLUS);
     } else if (*p == '-') {
         p = scan_token_helper(tp, p, 1, TK_MINUS);
+    } else if (*p == '*') {
+        p = scan_token_helper(tp, p, 1, TK_MULT);
+    } else if (*p == '/') {
+        p = scan_token_helper(tp, p, 1, TK_DIV);
+    } else if ((*p == '>' && *(p+1) == '>')) {
+    	p = scan_token_helper(tp, p, 2, TK_LSR);
+    } else if ((*p == '<' && *(p+1) == '<')) {
+        p = scan_token_helper(tp, p, 2, TK_LSL);
+    } else if ((*p == '>' && *(p+1) == '-')) {
+    	p = scan_token_helper(tp, p, 2, TK_ASR);
+    } else if ((*p == '~')) {
+    	p = scan_token_helper(tp, p, 1, TK_NOT);
+    } else if ((*p == '&')) {
+    	p = scan_token_helper(tp, p, 1, TK_AND);
+    } else if ((*p == '|')) {
+    	p = scan_token_helper(tp, p, 1, TK_OR);
+    } else if ((*p == '^')) {
+    	p = scan_token_helper(tp, p, 1, TK_XOR);	
+    } else if ((*p == '(')) {
+    	p = scan_token_helper(tp, p, 1, TK_LPAREN);
+    } else if ((*p == ')')) {
+    	p = scan_token_helper(tp, p, 1, TK_RPAREN);
     } else {
         /* Instead of returning an error code, we will usually
            exit on failure. */

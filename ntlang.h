@@ -11,21 +11,27 @@
  * scan.c
  */
  
-/* 
+/*
 
-# Scanner EBNF (microsyntax)
+# Scanner EBNF
 
-tokens ::= (token)*
-token  ::= intlit | symbol
-symbol ::= '+'
-integer ::= digit (digit)*
-digit  ::= '0' | '1' | ... | '9'
+whitespace  ::=  (' ' | '\t') (' ' | '\t')*
+
+tokenlist  ::= (token)*
+token      ::= intlit | hexlit | binlit | symbol
+symbol     ::= '+' | '-' | '*' | '/' | '>>' | '>-' | '<<' | '~' | '&' | '|' | '^'
+intlit     ::= digit (digit)*
+regname    ::= 'a0' | 'a1' | ... | 'a7'
+hexlit     ::= '0x' | hexdigit (hexdigit)*
+binlit     ::= '0b' ['0', '1'] (['0', '1'])*
+hexdigit   ::= 'a' | ... | 'f' | 'A' | ... | 'F' | digit
+digit      ::= '0' | ... | '9'
 
 # Ignore
-
-whitespace ::= (' ' | '\t') (' ' | '\t')*
+whitespace ::= ' ' | '\t' (' ' | '\t')*
 
 */
+
 
 #define SCAN_TOKEN_LEN 32
 #define SCAN_TABLE_LEN 1024
@@ -37,6 +43,22 @@ enum scan_token_enum {
     TK_MINUS,  /* - */
     TK_EOT,    /* end of text */
     TK_ANY,    /* A wildcard token used for parsing */
+    TK_BINLIT, /* 0b1010, 0b11110000 */
+    TK_HEXLIT, /* 0x0000000A, 0x0000000B  */
+    TK_HEXDIGITLIT, /* a, b, c... f */
+    TK_MULT,   /* * */
+    TK_DIV,    /* / */
+    TK_LSR,    /* >> */
+    TK_ASR,    /* >- */
+    TK_LSL,    /* << */
+    TK_NOT,    /* ~ */
+    TK_AND,    /* & */
+    TK_OR,     /* | */
+    TK_XOR,    /* ^ */
+    TK_LPAREN, /* ( */
+    TK_RPAREN, /* ) */
+    TK_REGNAME, /* a1, a2, ..... a7 */
+    TK_NONE
 };
 
 #define SCAN_TOKEN_STRINGS {\
@@ -44,7 +66,22 @@ enum scan_token_enum {
     "TK_PLUS",\
     "TK_MINUS",\
     "TK_EOT",\
-    "TK_ANY"\
+    "TK_ANY",\
+    "TK_BINLIT",\
+    "TK_HEXLIT",\
+    "TK_HEXDIGITLIT",\
+    "TK_MULT",\
+    "TK_DIV",\
+    "TK_LSR",\
+    "TK_ASR",\
+    "TK_LSL",\
+    "TK_NOT",\
+    "TK_AND",\
+    "TK_OR",\
+    "TK_XOR",\
+    "TK_LPAREN",\
+    "TK_RPAREN",\
+    "TK_REGNAME"\
 };
 
 struct scan_token_st {
@@ -69,21 +106,31 @@ bool scan_table_accept(struct scan_table_st *st, enum scan_token_enum tk_expecte
  * parse.c
  */
 
- /*
- A simple grammar for the ntcalc langauge
+/*
 
 # Parser
 
 program    ::= expression EOT
-expression ::= operand (operator operand)*
-operand    ::= intlit
-             | '-' operand
 
-operator   ::= '+' | '-'
+expression ::= operand (operator operand)*
+
+operand    ::= intlit
+             | hexlit
+             | binlit
+             | regname
+             | '-' operand
+             | '~' operand
+             | '(' expression ')'
 */
 
 enum parse_expr_enum {EX_INTVAL, EX_OPER1, EX_OPER2};
-enum parse_oper_enum {OP_PLUS, OP_MINUS, OP_MULT, OP_DIV};
+enum parse_oper_enum {OP_PLUS, OP_MINUS, OP_MULT, OP_DIV, OP_LSR, OP_ASR, OP_LSL, OP_NOT, OP_AND, OP_OR, OP_XOR, OP_NONE};
+
+struct parse_oper_pair_st {
+    enum scan_token_enum tkid;
+    enum parse_oper_enum opid;
+};
+
 
 struct parse_node_st {
     enum parse_expr_enum type;
@@ -109,11 +156,6 @@ struct parse_table_st {
     int len;
 };
 
-void parse_table_init(struct parse_table_st *pt);
-struct parse_node_st * parse_node_new(struct parse_table_st *pt);
-struct parse_node_st * parse_program(struct parse_table_st *pt,
-                                        struct scan_table_st *st);
-void parse_tree_print(struct parse_node_st *np);
 
 /*
  * config
@@ -121,7 +163,18 @@ void parse_tree_print(struct parse_node_st *np);
 
 struct config_st {
     char input[SCAN_INPUT_LEN];
+    int base;
+    int width;
+    bool unsigned_flag;
+    int args[8];
 };
+
+void parse_table_init(struct parse_table_st *pt);
+struct parse_node_st * parse_node_new(struct parse_table_st *pt);
+struct parse_node_st * parse_program(struct parse_table_st *pt,
+                                        struct scan_table_st *st, struct config_st *config);
+void parse_tree_print(struct parse_node_st *np);
+
 
 /*
  * eval.c
@@ -130,4 +183,17 @@ struct config_st {
 uint32_t eval(struct parse_node_st *pt);
 void eval_print(struct config_st *cp, uint32_t value);
 
+/*
+ * ntlang.c
+ */ 
+void parse_args(struct config_st *cp, int argc, char **argv);
+void print_usage();
+void ntlang_error();
 
+/*
+conv.c
+*/
+void convert_error(char* err);
+uint32_t convert_string_to_uint32(char *str, int base);    
+uint32_t convert_char_to_uint32_digit(char ch); 
+char convert_uint32_digit_to_char(uint32_t digit);

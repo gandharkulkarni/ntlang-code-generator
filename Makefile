@@ -9,7 +9,7 @@ GET_BITSEQ_SIGNED_OBJS = get_bitseq_signed.o\
 PACK_OBJS = pack_bytes.o pack_bytes_c.o pack_bytes_s.o
 UNPACK_OBJS = unpack_bytes.o unpack_bytes_c.o unpack_bytes_s.o
 
-NTLANG_OBJS = ntlang.o scan.o parse.o eval.o
+NTLANG_OBJS = ntlang.o scan.o parse.o eval.o conv.o
 
 OBJS = ${RSTR_OBJS} ${RSTR_REC_OBJS} \
 	   ${GET_BITSEQ_OBJS} ${GET_BITSEQ_SIGNED_OBJS} \
