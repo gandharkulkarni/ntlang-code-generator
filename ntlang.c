@@ -24,12 +24,17 @@ int main(int argc, char **argv) {
     // printf("\n");
     
     parse_table_init(&parse_table);
-    parse_tree = parse_program(&parse_table, &scan_table, &config);
+    parse_tree = parse_program(&parse_table, &scan_table);
     // parse_tree_print(parse_tree);
     // printf("\n");
-
-    value = eval(parse_tree);
-    eval_print(&config, value);
+    if(config.compile_mode==true){
+        compile_init(config.name);
+        compile(parse_tree);
+        compile_exit();
+    } else {
+        value = eval(parse_tree, &config);
+        eval_print(&config, value);
+    }
 
     return 0;
 }
@@ -40,8 +45,8 @@ void ntlang_error(char* err){
 }
 
 void print_usage(){
-	printf("Usage: project01 <expression>\n");
-    printf("  Example: project01 \"1 + 2\"\n");
+	printf("Usage: ntlang <expression>\n");
+    printf("  Example: ntlang \"1 + 2\"\n");
 }
 
 char* get_arg_value(int *i, int argc, char **argv, char *flag){
@@ -83,7 +88,7 @@ void parse_args(struct config_st *cp, int argc, char **argv) {
         	cp->width = (int) convert_string_to_uint32(arg_value, 10);
         } else if (argv[i][0] == '-' && argv[i][1] == 'u') {
        		cp->unsigned_flag = true;
-       	} else if(argv[i][0]=='-' && argv[i][1]=='a') {
+       	} else if (argv[i][0]=='-' && argv[i][1]=='a') {
        	    int index = argv[i][2] - '0';
        	    if(index>=0 && index <8) {
        	        char *arg_value = get_arg_value(&i, argc, argv, argv[i]);  
@@ -91,6 +96,10 @@ void parse_args(struct config_st *cp, int argc, char **argv) {
        	    } else {
        	        ntlang_error("Supported registers are a0, a1, a2,....a7");
        	    }
+       	} else if (argv[i][0] == '-' && argv[i][1] == 'c'){
+       	    char *arg_value = get_arg_value(&i, argc, argv, "-c");
+       	    cp->compile_mode = true;
+       	    strncpy(cp->name, arg_value, SCAN_INPUT_LEN);
        	}
 
         i += 1;
