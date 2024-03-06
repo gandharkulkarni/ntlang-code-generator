@@ -43,20 +43,20 @@ struct parse_oper_pair_st parse_oper_map[] = {
  * we call them before they are defined.
  */
 struct parse_node_st * parse_program(struct parse_table_st *pt, 
-                                        struct scan_table_st *st, struct config_st *config);
+                                        struct scan_table_st *st);
 struct parse_node_st * parse_expression(struct parse_table_st *pt, 
-                                        struct scan_table_st *st, struct config_st *config);
+                                        struct scan_table_st *st);
 struct parse_node_st * parse_operand(struct parse_table_st *pt, 
-                                        struct scan_table_st *st, struct config_st *config);
+                                        struct scan_table_st *st);
 
 /* We need a parsing function for each rule in the EBNF grammer */
 
 struct parse_node_st * parse_program(struct parse_table_st *pt, 
-                                        struct scan_table_st *st, struct config_st *config) {
+                                        struct scan_table_st *st) {
     struct parse_node_st *np1;
 
     /* A program is a single expression followed by EOT */
-    np1 = parse_expression(pt, st, config);
+    np1 = parse_expression(pt, st);
 
     if (!scan_table_accept(st, TK_EOT)) {
         parse_error("Expecting EOT");
@@ -77,12 +77,12 @@ struct parse_oper_pair_st *current_pair = parse_oper_map;
 };
 
 struct parse_node_st * parse_expression(struct parse_table_st *pt, 
-                                        struct scan_table_st *st, struct config_st *config) {
+                                        struct scan_table_st *st) {
     struct scan_token_st *tp;
     struct parse_node_st *np1, *np2;
 
     /* An expression must start with an operand. */
-    np1 = parse_operand(pt, st, config);
+    np1 = parse_operand(pt, st);
 
     while (true) {
         tp = scan_table_get(st, 0);
@@ -94,7 +94,7 @@ struct parse_node_st * parse_expression(struct parse_table_st *pt,
             np2->type = EX_OPER2;
             np2->oper2.oper = opid;
             np2->oper2.left = np1;
-            np2->oper2.right = parse_operand(pt, st, config);
+            np2->oper2.right = parse_operand(pt, st);
             np1 = np2;
         } else {
             break;
@@ -104,12 +104,8 @@ struct parse_node_st * parse_expression(struct parse_table_st *pt,
     return np1;
 }
 
-uint32_t get_register_value(char* reg_name){
-    return convert_string_to_uint32(reg_name+1, 10);
-}
-
 struct parse_node_st * parse_operand(struct parse_table_st *pt,
-                                     struct scan_table_st *st, struct config_st *config) {
+                                     struct scan_table_st *st) {
     struct scan_token_st *tp;
     struct parse_node_st *np1;
 
@@ -134,21 +130,21 @@ struct parse_node_st * parse_operand(struct parse_table_st *pt,
     } else if (scan_table_accept(st, TK_REGNAME)) {
         tp = scan_table_get(st, -1);
         np1 = parse_node_new(pt);
-        np1->type = EX_INTVAL;
-        uint32_t value = config->args[get_register_value(tp->value)];
-        np1->intval.value = value;
+        np1->type = EX_REG;
+        // uint32_t value = config->args[get_register_value(tp->value)];
+        np1->reg.name = tp->value;
     } else if (scan_table_accept(st, TK_MINUS)) {
         np1 = parse_node_new(pt);
         np1->type = EX_OPER1;
         np1->oper1.oper = OP_MINUS;
-        np1->oper1.operand = parse_operand(pt, st, config);
+        np1->oper1.operand = parse_operand(pt, st);
     } else if (scan_table_accept(st, TK_NOT)) {
         np1 = parse_node_new(pt);
         np1->type = EX_OPER1;
         np1->oper1.oper = OP_NOT;
-        np1->oper1.operand = parse_operand(pt, st, config);
+        np1->oper1.operand = parse_operand(pt, st);
     } else if (scan_table_accept(st, TK_LPAREN)) {
-        np1 = parse_expression(pt, st, config);
+        np1 = parse_expression(pt, st);
         if (!scan_table_accept(st, TK_RPAREN)) {
             parse_error("Missing right paren");
         }
@@ -172,6 +168,8 @@ void parse_tree_print_expr(struct parse_node_st *np, int level) {
 
     if (np->type == EX_INTVAL) {
         printf("INTVAL %d\n", np->intval.value);
+    } else if(np->type==EX_REG) {
+        printf("REG %s\n", np->reg.name);
     } else if (np->type == EX_OPER1) {
         printf("OPER1 %s\n", parse_oper_strings[np->oper1.oper]);
         parse_tree_print_expr(np->oper1.operand, level+1);
