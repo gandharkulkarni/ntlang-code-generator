@@ -6,14 +6,20 @@ void eval_error(char *err) {
     printf("eval_error: %s\n", err);
     exit(-1);
 }
+uint32_t eval_get_register_value(char* reg_name){
+    return convert_string_to_uint32(reg_name+1, 10);
+}
 
-uint32_t eval(struct parse_node_st *pt) {
+uint32_t eval(struct parse_node_st *pt, struct config_st *config) {
     uint32_t v1, v2;
 
     if (pt->type == EX_INTVAL) {
         v1 = pt->intval.value;
-    } else if (pt->type == EX_OPER1) {
-        v1 = eval(pt->oper1.operand);
+    } else if (pt->type == EX_REG){
+         v1 = config->args[eval_get_register_value(pt->reg.name)];
+    }
+    else if (pt->type == EX_OPER1) {
+        v1 = eval(pt->oper1.operand, config);
         if (pt->oper1.oper == OP_MINUS) {
             v1 = -v1;
         } else if (pt->oper1.oper == OP_NOT) {
@@ -22,8 +28,8 @@ uint32_t eval(struct parse_node_st *pt) {
        		eval_error("Bad operator");
         }
     } else if (pt->type == EX_OPER2) {
-        v1 = eval(pt->oper2.left);
-        v2 = eval(pt->oper2.right);
+        v1 = eval(pt->oper2.left, config);
+        v2 = eval(pt->oper2.right, config);
         if (pt->oper2.oper == OP_PLUS) {
             v1 = v1 + v2;
         } else if (pt->oper2.oper == OP_MINUS) {
