@@ -73,9 +73,9 @@ char* scan_binlit(char *p, char *end, struct scan_token_st *tp) {
         p += 1;
         i += 1;
     }
-    if (i == 0) { 
-    	 /* No binary digits were read */
-	 	printf("scan error: Expecting at least one binary digit after '0b' ");
+    if (i == 0) {
+        /* No binary digits were read */
+        printf("scan error: Expecting at least one binary digit after '0b' ");
         exit(-1);
     }
     tp->value[i] = '\0';

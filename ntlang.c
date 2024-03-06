@@ -40,12 +40,12 @@ int main(int argc, char **argv) {
 }
 
 void ntlang_error(char* err){
-	printf(" %s\n", err);
+    printf(" %s\n", err);
     exit(-1);
 }
 
 void print_usage(){
-	printf("Usage: ntlang <expression>\n");
+    printf("Usage: ntlang <expression>\n");
     printf("  Example: ntlang \"1 + 2\"\n");
 }
 
@@ -56,7 +56,7 @@ char* get_arg_value(int *i, int argc, char **argv, char *flag){
     } else {
     	char error_message[50];
         sprintf(error_message, "No expression given after flag %s", flag);
-   	 	ntlang_error(error_message);
+        ntlang_error(error_message);
         exit(-1);
     }
 }

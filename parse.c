@@ -99,7 +99,7 @@ struct parse_node_st * parse_expression(struct parse_table_st *pt,
         } else {
             break;
         }
-}
+    }
 
     return np1;
 }
@@ -115,7 +115,7 @@ struct parse_node_st * parse_operand(struct parse_table_st *pt,
         np1->type = EX_INTVAL;
         /* For Project01 you need to implement your own version of atoi() */
         np1->intval.value = atoi(tp->value);
-    }else if (scan_table_accept(st, TK_BINLIT)) {
+    } else if (scan_table_accept(st, TK_BINLIT)) {
         tp = scan_table_get(st, -1);
         uint32_t value = convert_string_to_uint32(tp->value, 2);
         np1 = parse_node_new(pt);

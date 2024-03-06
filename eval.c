@@ -37,11 +37,11 @@ uint32_t eval(struct parse_node_st *pt, struct config_st *config) {
         } else if (pt->oper2.oper == OP_MULT) {
             v1 = v1 * v2;
         } else if (pt->oper2.oper == OP_DIV) {
-        	if(v2 != 0) {
-        		v1 = v1 / v2;	
-        	} else{
-        		eval_error("Division by zero"); 
-        	}
+            if(v2 != 0) {
+                v1 = v1 / v2;
+            } else {
+                eval_error("Division by zero");
+            }
         } else if (pt->oper2.oper == OP_LSR) {
             v1 = v1 >> v2;
         } else if (pt->oper2.oper == OP_ASR) {

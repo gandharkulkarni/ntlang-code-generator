@@ -29,7 +29,7 @@ void compile_unary_operation(struct parse_node_st *pt) {
         printf("\tli t1, -1\n");
         printf("\txor t0, t0, t1\n");
     } else {
-   		compile_error("Bad operator");
+        compile_error("Bad operator");
     }
     printf("\taddi sp, sp, -8\n");
     printf("\tsd t0, (sp)\n");
@@ -43,7 +43,7 @@ void compile_binary_operation(struct parse_node_st *pt) {
     } else if (pt->oper2.oper == OP_MULT) {
         printf("\tmul t0, t0, t1\n");
     } else if (pt->oper2.oper == OP_DIV) {
-		printf("\tdiv t0, t0, t1\n");    	
+        printf("\tdiv t0, t0, t1\n");    	
     } else if (pt->oper2.oper == OP_LSR) {
         printf("\tsrl t0, t0, t1\n");
     } else if (pt->oper2.oper == OP_ASR) {
@@ -68,8 +68,7 @@ void compile (struct parse_node_st *pt) {
         printf("\taddi sp, sp, -8\n");
         printf("\tli t0, %d\n", pt->intval.value);
         printf("\tsd t0, (sp)\n");
-    }
-    else if (pt->type == EX_REG) {
+    } else if (pt->type == EX_REG) {
         printf("\taddi sp, sp, -8\n");
         printf("\tsd %s, (sp)\n", pt->reg.name);
     } else if (pt->type == EX_OPER1) {
