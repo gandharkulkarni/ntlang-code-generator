@@ -1,11 +1,12 @@
+\
 /* ntlang.h - header file for project01 (ntlang) */
-
 #include <stdbool.h> 
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <fcntl.h>
+#include <unistd.h>
 
 /*
  * scan.c
@@ -123,7 +124,7 @@ operand    ::= intlit
              | '(' expression ')'
 */
 
-enum parse_expr_enum {EX_INTVAL, EX_OPER1, EX_OPER2};
+enum parse_expr_enum {EX_INTVAL, EX_OPER1, EX_OPER2, EX_REG};
 enum parse_oper_enum {OP_PLUS, OP_MINUS, OP_MULT, OP_DIV, OP_LSR, OP_ASR, OP_LSL, OP_NOT, OP_AND, OP_OR, OP_XOR, OP_NONE};
 
 struct parse_oper_pair_st {
@@ -136,6 +137,7 @@ struct parse_node_st {
     enum parse_expr_enum type;
     union {
         struct {uint32_t value;} intval;
+        struct {char*  name;} reg;
         struct {enum parse_oper_enum oper;
                 struct parse_node_st *operand;} oper1;
         struct {enum parse_oper_enum oper;
@@ -167,12 +169,14 @@ struct config_st {
     int width;
     bool unsigned_flag;
     int args[8];
+    bool compile_mode;
+    char name[SCAN_INPUT_LEN];
 };
 
 void parse_table_init(struct parse_table_st *pt);
 struct parse_node_st * parse_node_new(struct parse_table_st *pt);
 struct parse_node_st * parse_program(struct parse_table_st *pt,
-                                        struct scan_table_st *st, struct config_st *config);
+                                        struct scan_table_st *st);
 void parse_tree_print(struct parse_node_st *np);
 
 
@@ -180,8 +184,9 @@ void parse_tree_print(struct parse_node_st *np);
  * eval.c
  */
 
-uint32_t eval(struct parse_node_st *pt);
+uint32_t eval(struct parse_node_st *pt, struct config_st *config);
 void eval_print(struct config_st *cp, uint32_t value);
+uint32_t eval_get_register_value(char* reg_name);
 
 /*
  * ntlang.c
@@ -197,3 +202,12 @@ void convert_error(char* err);
 uint32_t convert_string_to_uint32(char *str, int base);    
 uint32_t convert_char_to_uint32_digit(char ch); 
 char convert_uint32_digit_to_char(uint32_t digit);
+
+
+/*
+ * compile.c
+ */
+void compile_output_main(char* name);
+void compile (struct parse_node_st *pt);
+void compile_init(char* name);
+void compile_exit();
