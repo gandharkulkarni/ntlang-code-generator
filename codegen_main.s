@@ -26,13 +26,13 @@ main:
 
     li t0, 1
     sub a0, a0, t0              # argc = argc - 1
+    blt a0, t0, end_loop
 
     # Save argv to a1
     addi a1, a1, 8
 
     li a2, 0
     li a4, 5
-    
     loop:
         
         slli t6, a2, 3          # i = i* 8
@@ -78,8 +78,8 @@ main:
 
     call codegen_func_s
 
-    mv a2, a1
     mv a1, a0
+    mv a2, a1
     la a0, result_string
 
     call printf
