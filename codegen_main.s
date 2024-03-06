@@ -10,9 +10,8 @@ result_string:
 
 main:
 
-    addi sp, sp, -32
+    addi sp, sp, -128
     sd ra, 0(sp)
-    addi sp, sp, -80
 
     # Initializing stack values as 0
     li t0, 0 
@@ -30,7 +29,6 @@ main:
 
     # Save argv to a1
     addi a1, a1, 8
-    # ld a1, (a1)
 
     li a2, 0
     li a4, 5
@@ -54,8 +52,6 @@ main:
         
         slli t1, a4, 3          # i = i* 8
         add t0, sp, t1          # t7 = sp + i*8
-        ld t1, 0(sp)            # base location for sp
-        add t0, t1, t0          # base + i
         sd a0, (t0)             # store a0 at new stack location
         
         addi a2, a2, 1
@@ -79,7 +75,6 @@ main:
     ld a6, 88(sp)
     ld a7, 96(sp)
 
-    addi sp, sp, 80
 
     call codegen_func_s
 
@@ -88,9 +83,9 @@ main:
     la a0, result_string
 
     call printf
-
+    
     ld ra, 0(sp)
-    addi sp, sp, 32
+    addi sp, sp, 128
 
     ret
     
