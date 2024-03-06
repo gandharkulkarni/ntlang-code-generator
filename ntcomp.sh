@@ -9,7 +9,7 @@ a3="$6"
 a4="$7"
 a5="$8"
 a6="$9"
-a7="$10"
+a7="${10}"
 
 ./ntlang -e "$expr" -c "$name" > "$name.s"
 gcc -o "$name" "$name.s"
